@@ -14,18 +14,22 @@ class LiveExecutor:
     """
 
     def __init__(
-        self,
-        exchange: BinanceTestnetExchange,
-        symbol: str,
-        quantity: float,
-        csv_path: str = "data/live_trades.csv",
-        poll_interval_sec: int = 5,
-    ) -> None:
+    self,
+    exchange: BinanceTestnetExchange,
+    symbol: str,
+    quantity: float,
+    csv_path: str = "data/live_trades.csv",
+    poll_interval_sec: int = 5,
+    dry_run: bool = True,
+) -> None:
+
         self.exchange = exchange
         self.symbol = symbol
         self.quantity = quantity
         self.csv_path = csv_path
         self.poll_interval_sec = poll_interval_sec
+        self.dry_run = dry_run
+
 
         self.strategy = MultiTFEMAStrategy()
         self.data_handler = MarketDataHandler()
@@ -114,19 +118,22 @@ class LiveExecutor:
     # -----------------------------
 
     def _handle_decision(self, decision: Decision, candle: Candle) -> None:
-        if decision == Decision.ENTER_LONG:
+    if decision == Decision.ENTER_LONG:
+        if not self.dry_run:
             self.exchange.place_market_order(
                 self.symbol, "BUY", self.quantity
             )
-            self._open_trade = {
-                "direction": "LONG",
-                "entry_time": candle.timestamp,
-                "entry_price": candle.close,
-            }
+        self._open_trade = {
+            "direction": "LONG",
+            "entry_time": candle.timestamp,
+            "entry_price": candle.close,
+        }
+
 
         elif decision == Decision.ENTER_SHORT:
-            self.exchange.place_market_order(
-                self.symbol, "SELL", self.quantity
+           if not self.dry_run:
+              self.exchange.place_market_order(
+                  self.symbol, "SELL", self.quantity
             )
             self._open_trade = {
                 "direction": "SHORT",
@@ -136,9 +143,10 @@ class LiveExecutor:
 
         elif decision == Decision.EXIT and self._open_trade:
             side = "SELL" if self._open_trade["direction"] == "LONG" else "BUY"
-            self.exchange.place_market_order(
-                self.symbol, side, self.quantity
-            )
+            if not self.dry_run:
+             self.exchange.place_market_order(
+                 self.symbol, side, self.quantity
+              )
 
             self._open_trade.update(
                 {
