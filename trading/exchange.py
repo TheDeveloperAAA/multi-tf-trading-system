@@ -1,18 +1,29 @@
 from typing import Optional
+import os
 
+from dotenv import load_dotenv
 from binance.client import Client
 from binance.enums import SIDE_BUY, SIDE_SELL, ORDER_TYPE_MARKET
 
 from strategy.base import Candle
 
+# Load environment variables from .env
+load_dotenv()
+
 
 class BinanceTestnetExchange:
     """
-    Thin wrapper around Binance Testnet.
+    Thin wrapper around Binance Spot Testnet.
     No strategy logic. No data alignment.
     """
 
-    def __init__(self, api_key: str, api_secret: str) -> None:
+    def __init__(self) -> None:
+        api_key = os.getenv("BINANCE_API_KEY")
+        api_secret = os.getenv("BINANCE_API_SECRET")
+
+        if not api_key or not api_secret:
+            raise RuntimeError("BINANCE_API_KEY or BINANCE_API_SECRET not set")
+
         self.client = Client(api_key, api_secret, testnet=True)
         self.client.API_URL = "https://testnet.binance.vision/api"
 
@@ -21,9 +32,6 @@ class BinanceTestnetExchange:
     # -----------------------------
 
     def get_latest_closed_5m_candle(self, symbol: str) -> Optional[Candle]:
-        """
-        Fetch the most recent CLOSED 5m candle.
-        """
         klines = self.client.get_klines(
             symbol=symbol,
             interval=Client.KLINE_INTERVAL_5MINUTE,
@@ -49,14 +57,12 @@ class BinanceTestnetExchange:
     # -----------------------------
 
     def place_market_order(self, symbol: str, side: str, quantity: float) -> dict:
-        """
-        Place a market order. Returns raw exchange response.
-        """
         return self.client.create_order(
             symbol=symbol,
             side=SIDE_BUY if side == "BUY" else SIDE_SELL,
             type=ORDER_TYPE_MARKET,
             quantity=quantity,
         )
+
 
 
