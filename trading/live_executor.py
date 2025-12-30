@@ -118,16 +118,16 @@ class LiveExecutor:
     # -----------------------------
 
     def _handle_decision(self, decision: Decision, candle: Candle) -> None:
-    if decision == Decision.ENTER_LONG:
-        if not self.dry_run:
-            self.exchange.place_market_order(
-                self.symbol, "BUY", self.quantity
-            )
-        self._open_trade = {
-            "direction": "LONG",
-            "entry_time": candle.timestamp,
-            "entry_price": candle.close,
-        }
+      if decision == Decision.ENTER_LONG:
+          if not self.dry_run:
+              self.exchange.place_market_order(
+                  self.symbol, "BUY", self.quantity
+              )
+          self._open_trade = {
+              "direction": "LONG",
+              "entry_time": candle.timestamp,
+              "entry_price": candle.close,
+          }
 
 
         elif decision == Decision.ENTER_SHORT:
