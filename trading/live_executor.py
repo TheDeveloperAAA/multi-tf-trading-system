@@ -118,40 +118,40 @@ class LiveExecutor:
     # -----------------------------
 
     def _handle_decision(self, decision: Decision, candle: Candle) -> None:
-     if decision == Decision.ENTER_LONG:
-        self.exchange.place_market_order(
+      if decision == Decision.ENTER_LONG:
+         self.exchange.place_market_order(
             self.symbol, "BUY", self.quantity
-        )
-        self._open_trade = {
+         )
+         self._open_trade = {
             "direction": "LONG",
             "entry_time": candle.timestamp,
             "entry_price": candle.close,
-        }
+         }
 
-    elif decision == Decision.ENTER_SHORT:
-        self.exchange.place_market_order(
-            self.symbol, "SELL", self.quantity
-        )
-        self._open_trade = {
+       elif decision == Decision.ENTER_SHORT:
+          self.exchange.place_market_order(
+             self.symbol, "SELL", self.quantity
+         )
+          self._open_trade = {
             "direction": "SHORT",
             "entry_time": candle.timestamp,
             "entry_price": candle.close,
-        }
+         }
 
-    elif decision == Decision.EXIT and self._open_trade:
-        side = "SELL" if self._open_trade["direction"] == "LONG" else "BUY"
-        self.exchange.place_market_order(
+       elif decision == Decision.EXIT and self._open_trade:
+          side = "SELL" if self._open_trade["direction"] == "LONG" else "BUY"
+           self.exchange.place_market_order(
             self.symbol, side, self.quantity
-        )
+         )
 
-        self._open_trade.update(
-            {
+           self._open_trade.update(
+             {
                 "exit_time": candle.timestamp,
-                "exit_price": candle.close,
+                 "exit_price": candle.close,
             }
-        )
+          )
 
-        self._append_trade(self._open_trade)
-        self._open_trade = None
+            self._append_trade(self._open_trade)
+             self._open_trade = None
 
 
