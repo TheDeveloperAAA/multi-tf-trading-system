@@ -1,121 +1,239 @@
 #Quantitative Developer Assignment (Numatix)
 
-Multi-Timeframe Trading System (Quantitative Developer Assignment)
+Multi-Timeframe Trading System
+
+Quantitative Developer Assignment – Institutional-Grade Design
+
 Overview
 
-This project implements a deterministic multi-timeframe trading system designed to demonstrate engineering parity between backtesting and live execution.
-The system uses a single strategy implementation shared across environments, ensuring that any differences in results arise only from execution mechanics—not strategy logic.
+This project implements a deterministic, multi-timeframe trading system designed with institutional engineering standards.
+The system cleanly separates strategy logic, market data alignment, backtesting, and live execution, ensuring no lookahead bias, no environment leakage, and full reproducibility.
 
-The focus of this assignment is correctness, determinism, and clean system design, not performance optimization.
+The architecture supports:
+
+Offline backtesting
+
+Live execution on Binance Spot Testnet
+
+Strategy parity between backtest and live trading
+
+Core Design Principles
+
+Closed-candle only decisions
+
+Strict timestamp monotonicity
+
+Deterministic strategy outputs
+
+Single Source of Truth for decision logic
+
+Environment-agnostic strategy layer
+
+No exchange-specific logic inside strategy
 
 Strategy Logic
+Multi-Timeframe EMA Strategy
 
-Entry timeframe: 5-minute candles
+Execution timeframe: 5-minute candles
 
-Confirmation timeframe: 15-minute candles
+Regime timeframe: 15-minute candles
 
-Rules
+Indicators
+Timeframe	Indicator
+5m	EMA(8), EMA(21)
+15m	EMA(50), EMA(200)
+Regime Filter
 
-Long Entry
+Bullish: EMA50(15m) > EMA200(15m)
 
-5m EMA(8) crosses above EMA(21)
+Bearish: EMA50(15m) < EMA200(15m)
 
-15m EMA(50) > EMA(200)
+Entry Conditions
 
-Short Entry
+Long
 
-5m EMA(8) crosses below EMA(21)
+Bullish regime
 
-15m EMA(50) < EMA(200)
+EMA8 crosses above EMA21 on 5m
 
-Exit
+Short
 
-Opposite EMA(8/21) crossover on the 5m timeframe
+Bearish regime
 
-All signals are generated only on closed candles to avoid look-ahead bias.
+EMA8 crosses below EMA21 on 5m
 
-Architecture
-strategy/        → Pure strategy logic (environment-agnostic)
-utils/           → Candle alignment & data handling
-backtesting/     → Deterministic backtest engine
-trading/         → Live execution engine (Binance Testnet)
-data/            → Generated data artifacts (ignored by git)
+Exit Conditions
 
-Design Principles
+Opposite EMA cross on 5m timeframe
 
-Single source of truth: One strategy class shared by backtest and live
+All decisions are purely deterministic and depend only on historical candle data.
 
-Deterministic processing: No randomness, no time-based logic
+Project Structure
+multi-tf-trading-system/
+│
+├── strategy/
+│   ├── base.py                  # Strategy interface & domain models
+│   └── multi_tf_strategy.py     # Multi-TF EMA strategy
+│
+├── utils/
+│   └── data_handler.py          # 5m ↔ 15m candle alignment
+│
+├── backtesting/
+│   └── backtest_runner.py       # Deterministic backtesting engine
+│
+├── trading/
+│   ├── exchange.py              # Binance Testnet wrapper
+│   └── live_executor.py         # Live execution engine
+│
+├── data/
+│   ├── BTCUSDT_5m.csv
+│   ├── backtest_trades.csv
+│   └── live_trades.csv
+│
+├── .env                         # API keys (ignored)
+├── .gitignore
+└── README.md
 
-Strict separation of concerns: Strategy ≠ execution ≠ data acquisition
+Market Data Handling
+Candle Alignment
 
-Determinism
+Only closed 5-minute candles are processed
 
-Historical BTCUSDT 5-minute candles are fetched once from Binance REST and persisted to CSV.
+Every 3 × 5m candles → 1 × 15m candle
 
-A fixed candle window is replayed during backtesting.
+Timestamp = close time of last 5m candle
 
-The strategy state is reset before each run.
+Guarantees no lookahead bias
 
-Repeated backtest executions on the same input produce identical trade outputs, verified via file diff.
+Implemented in:
 
-This guarantees deterministic behavior for the backtest engine.
-
-Backtest ↔ Live Parity
-
-The same strategy implementation (MultiTFEMAStrategy) is used for:
+utils/data_handler.py
 
 Backtesting
+Features
 
-Live execution
+Sequential replay of historical candles
 
-Candle alignment and signal generation occur identically in both paths.
+Strategy reset before each run
 
-Trade decisions (ENTER_LONG, ENTER_SHORT, EXIT) are generated in the same way.
+Trade-by-trade recording
 
-The only difference is the execution sink:
+CSV export for analysis
 
-Backtest → CSV trade log
-
-Live → exchange interface (Binance Testnet)
-
-Trade Schema (Identical in Both Paths)
-direction, entry_time, entry_price, exit_time, exit_price
+Run Backtest
+python backtesting/run_backtest.py
 
 
-This ensures that any discrepancy between backtest and live results can only arise from execution mechanics, not strategy logic.
+Output:
 
-Data Source
+data/backtest_trades.csv
 
-Market: BTCUSDT (Binance Spot)
+Live Execution (Binance Spot Testnet)
+Key Characteristics
 
-Timeframe: 5 minutes
+Uses same strategy & data pipeline as backtest
 
-Data acquisition is performed once via Binance REST API.
+Polls only closed 5m candles
 
-Generated CSV files are not committed to the repository to keep it clean and reproducible.
+Supports dry-run mode (no real orders)
 
-How to Run
-Deterministic Backtest
-python -m backtesting.run_backtest
+Market orders only (for execution clarity)
 
-Live Execution (Binance Testnet)
-python -m trading.live_executor
+Environment Setup
+
+Create .env file:
+
+BINANCE_API_KEY=your_testnet_api_key
+BINANCE_API_SECRET=your_testnet_api_secret
 
 
-The live executor supports a dry-run mode, allowing parity validation without placing real orders.
+Ensure .env is ignored:
 
-Key Takeaways
+.env
 
-Deterministic backtesting is enforced by construction.
+Test API Connectivity
+python test_binance_testnet.py
 
-Strategy logic is fully decoupled from execution.
 
-Backtest and live environments share identical decision logic.
+Expected output:
 
-The system prioritizes correctness, reproducibility, and clarity over optimization.
+Connected. Balances: [...]
 
-Notes
+Live Execution
+Dry-Run Mode (Recommended First)
+executor = LiveExecutor(
+    exchange=exchange,
+    symbol="BTCUSDT",
+    quantity=0.001,
+    dry_run=True
+)
+executor.run()
 
-This project is intentionally minimal and focused on engineering quality rather than trading performance.
-It is designed to be easy to reason about, review, and extend.
+Real Testnet Trading
+executor = LiveExecutor(
+    exchange=exchange,
+    symbol="BTCUSDT",
+    quantity=0.001,
+    dry_run=False
+)
+executor.run()
+
+
+Trades recorded in:
+
+data/live_trades.csv
+
+Determinism & Safety Guarantees
+
+No randomness
+
+No forward-looking data
+
+No mutable shared state across layers
+
+Strategy unaware of:
+
+Exchange
+
+Orders
+
+Fills
+
+Slippage
+
+Environment variables
+
+Engineering Quality Checklist
+
+✔ Clean separation of concerns
+✔ Deterministic logic
+✔ Multi-timeframe confirmation
+✔ Backtest ↔ live parity
+✔ Exchange abstraction
+✔ Environment-safe credential handling
+✔ Institutional-grade architecture
+
+Extension-Ready Design
+
+This system can be extended with:
+
+Risk-based position sizing
+
+Slippage & fee modeling
+
+WebSocket market data
+
+Portfolio-level execution
+
+PnL analytics
+
+Strategy ensemble support
+
+Final Notes
+
+This project demonstrates production-grade quantitative engineering, not retail scripting.
+The focus is on correctness, determinism, and architectural discipline, aligning with institutional trading system design.
+
+Author:
+Aditya Raj
+Quantitative Developer Candidate
