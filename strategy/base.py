@@ -1,3 +1,4 @@
+# strategy/base.py
 
 from abc import ABC, abstractmethod
 from enum import Enum, auto
@@ -22,7 +23,7 @@ class Decision(Enum):
 class Candle:
     """
     Canonical candle format.
-    Timestamp represents candle CLOSE time (UTC).
+    timestamp MUST represent candle close time (UTC).
     """
     timestamp: int
     open: float
@@ -34,22 +35,24 @@ class Candle:
 
 class Strategy(ABC):
     """
-    Single source of truth for strategy decisions.
-    Environment-agnostic and deterministic.
+    Single Source of Truth for decision-making.
+    - No environment awareness
+    - No order/fill knowledge
+    - Closed-candle decisions only
     """
 
     def __init__(self) -> None:
         self._position: PositionState = PositionState.FLAT
-        self._last_timestamp: Optional[int] = None
+        self._last_ts: Optional[int] = None
 
     @property
     def position(self) -> PositionState:
         return self._position
 
     def reset(self) -> None:
-        """Reset internal state (used by backtesting)."""
+        """Reset strategy state (used by backtesting)."""
         self._position = PositionState.FLAT
-        self._last_timestamp = None
+        self._last_ts = None
 
     @abstractmethod
     def on_candle_close(
@@ -60,8 +63,8 @@ class Strategy(ABC):
         history_15m_closes: list[float],
     ) -> Decision:
         """
-        Called exactly once per new CLOSED 5m candle.
-        Must return a deterministic decision.
+        Called exactly once per NEW closed 5m candle.
+        Must be deterministic for identical inputs.
         """
         raise NotImplementedError
 
