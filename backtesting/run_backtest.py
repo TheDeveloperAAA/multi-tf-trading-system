@@ -17,6 +17,7 @@ def load_candles_from_csv(path: str, limit: int):
                     high=float(row["high"]),
                     low=float(row["low"]),
                     close=float(row["close"]),
+                    volume=0.0,
                 )
             )
     return candles
