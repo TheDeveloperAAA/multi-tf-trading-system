@@ -1,6 +1,5 @@
 # strategy/multi_tf_strategy.py
 
-
 from typing import List
 from strategy.base import Strategy, Candle, Decision, PositionState
 
