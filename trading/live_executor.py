@@ -11,25 +11,24 @@ from trading.exchange import BinanceTestnetExchange
 class LiveExecutor:
     """
     Live execution loop using Binance Testnet.
+    Supports dry-run mode for parity validation (no real orders).
     """
 
     def __init__(
-    self,
-    exchange: BinanceTestnetExchange,
-    symbol: str,
-    quantity: float,
-    csv_path: str = "data/live_trades.csv",
-    poll_interval_sec: int = 5,
-    dry_run: bool = True,
-) -> None:
-
+        self,
+        exchange: BinanceTestnetExchange,
+        symbol: str,
+        quantity: float,
+        csv_path: str = "data/live_trades.csv",
+        poll_interval_sec: int = 5,
+        dry_run: bool = True,
+    ) -> None:
         self.exchange = exchange
         self.symbol = symbol
         self.quantity = quantity
         self.csv_path = csv_path
         self.poll_interval_sec = poll_interval_sec
         self.dry_run = dry_run
-
 
         self.strategy = MultiTFEMAStrategy()
         self.data_handler = MarketDataHandler()
@@ -77,7 +76,7 @@ class LiveExecutor:
 
     def run(self) -> None:
         """
-        Blocking loop. Polls for CLOSED 5m candles.
+        Blocking loop. Polls for CLOSED 5m candles only.
         """
         while True:
             candle_5m = self.exchange.get_latest_closed_5m_candle(self.symbol)
@@ -86,6 +85,7 @@ class LiveExecutor:
                 time.sleep(self.poll_interval_sec)
                 continue
 
+            # Enforce strictly increasing candle timestamps
             if (
                 self._last_candle_ts is not None
                 and candle_5m.timestamp <= self._last_candle_ts
@@ -118,23 +118,22 @@ class LiveExecutor:
     # -----------------------------
 
     def _handle_decision(self, decision: Decision, candle: Candle) -> None:
-      if decision == Decision.ENTER_LONG:
-          if not self.dry_run:
-              self.exchange.place_market_order(
-                  self.symbol, "BUY", self.quantity
-              )
-          self._open_trade = {
-              "direction": "LONG",
-              "entry_time": candle.timestamp,
-              "entry_price": candle.close,
-          }
-
+        if decision == Decision.ENTER_LONG:
+            if not self.dry_run:
+                self.exchange.place_market_order(
+                    self.symbol, "BUY", self.quantity
+                )
+            self._open_trade = {
+                "direction": "LONG",
+                "entry_time": candle.timestamp,
+                "entry_price": candle.close,
+            }
 
         elif decision == Decision.ENTER_SHORT:
-           if not self.dry_run:
-              self.exchange.place_market_order(
-                  self.symbol, "SELL", self.quantity
-            )
+            if not self.dry_run:
+                self.exchange.place_market_order(
+                    self.symbol, "SELL", self.quantity
+                )
             self._open_trade = {
                 "direction": "SHORT",
                 "entry_time": candle.timestamp,
@@ -144,9 +143,9 @@ class LiveExecutor:
         elif decision == Decision.EXIT and self._open_trade:
             side = "SELL" if self._open_trade["direction"] == "LONG" else "BUY"
             if not self.dry_run:
-             self.exchange.place_market_order(
-                 self.symbol, side, self.quantity
-              )
+                self.exchange.place_market_order(
+                    self.symbol, side, self.quantity
+                )
 
             self._open_trade.update(
                 {
