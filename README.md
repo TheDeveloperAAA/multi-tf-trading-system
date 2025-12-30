@@ -1,2 +1,5 @@
-# multi-tf-trading-system
-Deterministic multi-timeframe trading system with backtest and live parity. NumatiX Quantitative Developer assignment.
+#Quantitative Developer Assignment (Numatix)
+
+Work In Progress.
+
+This repository implements a deterministic multi-timeframe trading system with backtest and live excetion parity, built for the NumatiX Quan dev assignment.
