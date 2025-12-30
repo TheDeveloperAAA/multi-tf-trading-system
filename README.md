@@ -2,4 +2,4 @@
 
 Work In Progress.
 
-This repository implements a deterministic multi-timeframe trading system with backtest and live excetion parity, built for the NumatiX Quan dev assignment.
+This repository implements a deterministic multi-timeframe trading system with backtest and live excetion parity, built for the NumatiX Quantitative Developer assignment.
