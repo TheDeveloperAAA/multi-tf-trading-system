@@ -72,25 +72,25 @@ Project Structure
 multi-tf-trading-system/
 │
 ├── strategy/
-│   ├── base.py                  # Strategy interface & domain models
-│   └── multi_tf_strategy.py     # Multi-TF EMA strategy
+│   ├── base.py                                          # Strategy interface & domain models
+│   └── multi_tf_strategy.py                             # Multi-TF EMA strategy
 │
 ├── utils/
-│   └── data_handler.py          # 5m ↔ 15m candle alignment
+│   └── data_handler.py                                  # 5m ↔ 15m candle alignment
 │
 ├── backtesting/
-│   └── backtest_runner.py       # Deterministic backtesting engine
+│   └── backtest_runner.py                               # Deterministic backtesting engine
 │
 ├── trading/
-│   ├── exchange.py              # Binance Testnet wrapper
-│   └── live_executor.py         # Live execution engine
+│   ├── exchange.py                                      # Binance Testnet wrapper
+│   └── live_executor.py                                 # Live execution engine
 │
 ├── data/
 │   ├── BTCUSDT_5m.csv
 │   ├── backtest_trades.csv
 │   └── live_trades.csv
 │
-├── .env                         # API keys (ignored)
+├── .env                                                  # API keys (ignored)
 ├── .gitignore
 └── README.md
 
