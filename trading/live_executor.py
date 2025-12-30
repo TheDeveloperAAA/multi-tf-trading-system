@@ -118,7 +118,7 @@ class LiveExecutor:
     # -----------------------------
 
     def _handle_decision(self, decision: Decision, candle: Candle) -> None:
-    if decision == Decision.ENTER_LONG:
+     if decision == Decision.ENTER_LONG:
         self.exchange.place_market_order(
             self.symbol, "BUY", self.quantity
         )
